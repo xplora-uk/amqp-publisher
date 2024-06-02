@@ -54,9 +54,10 @@ npm i
 
 ```plain
 src/
-  __tests__/
-    component/      component tests
-  index.ts          main file that exports features of this library
+  AmqpPublisher.ts                  Generic AMQP publisher class
+  AmqpPublisherWithLegacyConfig.ts  Extends generic publisher initiated with legacy connection options
+  index.ts                          main file that exports features of this library
+  types.ts                          TypeScript types
 ```
 
 ### build
