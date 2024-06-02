@@ -1,18 +1,20 @@
+import { connect } from 'amqp-connection-manager';
+import type { AmqpConnectionManager, Options } from 'amqp-connection-manager';
 import { AmqpPublisher } from './AmqpPublisher';
-import type { Options } from 'amqp-connection-manager';
-import { IAmqpPublisherLegacyConfig } from './types';
+import { IAmqpPublisherLegacyConfig, IAmqpPublisherSettings } from './types';
 
-export class LegacyAmqpPublisher extends AmqpPublisher {
+export class AmqpPublisherWithLegacyConfig extends AmqpPublisher {
+  public name = 'AmqpPublisherWithLegacyConfig';
   constructor(
     legacyConfig: IAmqpPublisherLegacyConfig,
-    realQueueByInternalName: Record<string, string> = {},
-    durableQueuesByInternalName: Record<string, boolean> = {},
-    heartbeatIntervalMs = 5000,
+    settings: IAmqpPublisherSettings = { heartbeatIntervalMs: 5000 },
+    options = convertLegacyConfig(legacyConfig, settings.heartbeatIntervalMs),
+    conn: AmqpConnectionManager = connect(options),
   ) {
     super(
-      convertLegacyConfig(legacyConfig, heartbeatIntervalMs),
-      realQueueByInternalName,
-      durableQueuesByInternalName,
+      options,
+      settings,
+      conn,
     );
   }
 }

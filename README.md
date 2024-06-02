@@ -14,6 +14,34 @@ npm i @xplora-uk/amqp-publisher
 
 See `./example/index.js`
 
+```js
+const connectionConfig = {
+  protocol: 'amqp',
+  hostname: '127.0.0.1',
+  port    : 5672,
+  username: 'guest',
+  password: 'guest',
+  vhost   : '/',
+};
+const settings = {
+  realQueueByInternalName: {
+    // internal name => real name
+    'test1': 'TEST_1',
+    'test2': 'test2',
+  },
+  durableQueuesByInternalName: [
+    'test1',
+  ],
+};
+const publisher = new AmqpPublisher(connectionConfig, settings);
+await publisher.start();
+const result1 = await publisher.publishJson('test1', { message: 'Hello World 1' });
+console.log(result1);
+const result2 = await publisher.publishJson('test2', { message: 'Hello World 2' });
+console.log(result2);
+await publisher.stop();
+```
+
 ## maintenance
 
 ### installation

@@ -1,13 +1,16 @@
-import type { AmqpConnectionManager, ChannelWrapper, Options } from 'amqp-connection-manager';
+import type { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 
 export interface IAmqpPublisher {
   conn: AmqpConnectionManager;
 
   channelsByInternalQueueName: Record<string, ChannelWrapper>;
 
-  realQueueByInternalName: Record<string, string>;
+  realQueueByInternalName    : Record<string, string>;
+  durableQueuesByInternalName: Array<string>;
 
-  durableQueuesByInternalName: Record<string, boolean>;
+  heartbeatIntervalMs: number;
+  connectTimeoutMs   : number;
+  publishTimeoutMs   : number;
 
   logPrefix: () => string;
 
@@ -47,4 +50,13 @@ export interface IAmqpPublisherLegacyConfig {
     QUEUE   ?: Array<string>;
     prefetch?: number;
   }>;
+}
+
+export interface IAmqpPublisherSettings {
+  realQueueByInternalName?    : Record<string, string>;
+  durableQueuesByInternalName?: Array<string>;
+
+  heartbeatIntervalMs?: number;
+  connectTimeoutMs?   : number;
+  publishTimeoutMs?   : number;
 }

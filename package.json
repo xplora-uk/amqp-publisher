@@ -12,9 +12,7 @@
     "build:ts": "tsc -b ./tsconfig.build.json",
     "build": "npm-run-all clean build:ts",
     "clean": "rimraf lib",
-    "test": "mocha ./src/__tests__/**/*.test.ts",
-    "test:component": "mocha ./src/__tests__/component/**/*.test.ts",
-    "test:coverage": "nyc npm run test"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",

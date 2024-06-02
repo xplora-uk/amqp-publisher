@@ -1,21 +1,19 @@
-import amqp from 'amqp-connection-manager';
+import { connect } from 'amqp-connection-manager';
 import type { AmqpConnectionManager, Channel, ChannelWrapper, Options } from 'amqp-connection-manager';
 import JSON5 from 'json5';
-import { AmqpPublisherError, IAmqpPublisher, IAmqpPublisherResponse } from './types';
+import { AmqpPublisherError, IAmqpPublisher, IAmqpPublisherResponse, IAmqpPublisherSettings } from './types';
 
 export class AmqpPublisher implements IAmqpPublisher {
   public name = 'AmqpPublisher';
 
-  public conn: AmqpConnectionManager;
-
   // internal queue name to channel mapping
-  public channelsByInternalQueueName: { [key: string]: ChannelWrapper } = {};
+  public channelsByInternalQueueName: Record<string, ChannelWrapper> = {};
 
   // internal queue name to real queue name mapping
   public realQueueByInternalName: Record<string, string> = {};
 
   // internal queue name to durable mapping - by default all queues are non-durable
-  public durableQueuesByInternalName: Record<string, boolean> = {};
+  public durableQueuesByInternalName: Array<string> = [];
 
   public heartbeatIntervalMs = 5000;
 
@@ -24,29 +22,49 @@ export class AmqpPublisher implements IAmqpPublisher {
   public publishTimeoutMs = 5000;
 
   constructor(
-    public options: Options.Connect,
-    realQueueByInternalName: Record<string, string> = {},
-    durableQueuesByInternalName: Record<string, boolean> = {},
+    options: Options.Connect,
+    settings: IAmqpPublisherSettings = {},
+    public conn: AmqpConnectionManager = connect(options),
   ) {
-    if (realQueueByInternalName) this.realQueueByInternalName = realQueueByInternalName;
-    if (durableQueuesByInternalName) this.durableQueuesByInternalName = durableQueuesByInternalName;
-
-    this.conn = amqp.connect(options);
+    if (settings) {
+      if (settings.realQueueByInternalName) {
+        this.realQueueByInternalName = settings.realQueueByInternalName;
+      }
+      if (settings.durableQueuesByInternalName) {
+        this.durableQueuesByInternalName = settings.durableQueuesByInternalName;
+      }
+      if (settings.heartbeatIntervalMs) {
+        this.heartbeatIntervalMs = settings.heartbeatIntervalMs;
+      }
+      if (settings.connectTimeoutMs) {
+        this.connectTimeoutMs = settings.connectTimeoutMs;
+      }
+    }
 
     this.conn.on('connect', this.onConnect);
     this.conn.on('disconnect', this.onDisconnect);
   }
 
-  logPrefix = () => `AmqpClient ${this.name} - `;
+  logPrefix = () => `AmqpClient [${this.name}] - `;
 
   start = async (): Promise<IAmqpPublisherResponse> => {
+    if (!this.realQueueByInternalName) {
+      const errMsg = `${this.logPrefix()} no queues defined`;
+      return {
+        success: false,
+        errors: [new AmqpPublisherError(errMsg)],
+      };
+    }
+
     await this.conn.connect({ timeout: this.connectTimeoutMs });
+
     await Promise.all(
       Object.getOwnPropertyNames(this.realQueueByInternalName).map(internalQueue => {
         const realQueue = this.realQueueByInternalName[internalQueue];
         return this.openChannelForQueue(internalQueue, realQueue);
       }),
     );
+
     return {
       success: true,
       // TODO: collect errors
@@ -93,7 +111,7 @@ export class AmqpPublisher implements IAmqpPublisher {
   openChannelForQueue = (
     internalQueueName: string,
     realQueueName: string,
-    durable = this.durableQueuesByInternalName[internalQueueName] || false,
+    durable = this.durableQueuesByInternalName.includes(internalQueueName),
   ): ChannelWrapper => {
     const channel = this.conn.createChannel({
       json: false,

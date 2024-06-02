@@ -103,5 +103,5 @@
   "include": [
     "src",
     "src/__tests__"
-, "example/src/pets.js", "example/src/users.js"  ]
+  ]
 }
