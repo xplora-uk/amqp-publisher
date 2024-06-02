@@ -68,11 +68,7 @@ npm run build
 
 ### tests
 
-You can run tests with/without coverage info.
-
-```sh
-npm run test:coverage
-```
+TODO
 
 ### publish
 
